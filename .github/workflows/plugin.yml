@@ -1,0 +1,30 @@
+name: Build BetterNCM plugin
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 9.0.x
+      - name: Publish Steam helper
+        run: dotnet publish MusicRpc.csproj --configuration Release --runtime win-x64 --self-contained true -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true -p:EnableCompressionInSingleFile=true -p:PublishTrimmed=false --output build/helper
+      - name: Assemble plugin
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force build/plugin | Out-Null
+          Copy-Item plugin/manifest.json, plugin/index.js, build/helper/yySync.exe build/plugin/
+          Compress-Archive -Path build/plugin/* -DestinationPath build/yySyncNCM.zip -Force
+          Move-Item build/yySyncNCM.zip build/yySyncNCM.plugin
+      - uses: actions/upload-artifact@v4
+        with:
+          name: yySyncNCM-plugin
+          path: build/yySyncNCM.plugin
+          if-no-files-found: error

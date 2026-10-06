@@ -12,22 +12,27 @@ internal static class Program
     private static SteamSessionManager? _sessionManager;
     private static MainForm? _mainForm;
     private static NotifyIcon? TrayIcon { get; set; }
+    public static bool IsPluginMode { get; private set; }
     public static RpcManager? GetRpcManager() => _rpcManager;
     public static SteamStatusManager? GetSteamManager() => _steamManager;
     public static SteamSessionManager? GetSessionManager() => _sessionManager;
     [STAThread]
-    private static void Main()
+    private static void Main(string[] args)
     {
+        var pluginMode = args.Length == 2 && args[0] == "--betterncm";
+        IsPluginMode = pluginMode;
+        var bridgeFile = pluginMode ? args[1] : null;
         MemoryProfiler.LogMemorySnapshot("程序启动前");
         Application.EnableVisualStyles();
         Application.SetCompatibleTextRenderingDefault(false);
         using var mutex = new Mutex(true, "yySyncMutex", out var isNewInstance);
         if (!isNewInstance)
         {
-            MessageBox.Show("yySync is already running.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            if (!pluginMode)
+                MessageBox.Show("yySync is already running.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
             return;
         }
-        Win32Api.AutoStart.MigrateLegacyRegistration();
+        if (!pluginMode) Win32Api.AutoStart.MigrateLegacyRegistration();
         using var cts = new CancellationTokenSource();
         var token = cts.Token;
         _sessionManager = new SteamSessionManager();
@@ -75,8 +80,15 @@ internal static class Program
             }
         }
         _steamManager = new SteamStatusManager(_sessionManager);
-        _rpcManager = new RpcManager(_steamManager);
-        Task.Run(_rpcManager.Start, token);
+        if (pluginMode)
+        {
+            Task.Run(() => new BetterNcmBridge(bridgeFile!, _steamManager).RunAsync(token), token);
+        }
+        else
+        {
+            _rpcManager = new RpcManager(_steamManager);
+            Task.Run(_rpcManager.Start, token);
+        }
         Task.Run(() => GlobalMemoryMonitor(token), token);
         Task.Run(async () =>
         {
@@ -87,20 +99,21 @@ internal static class Program
             }
             catch (OperationCanceledException) { }
         }, token);
-        _mainForm = new MainForm();
-        TrayIcon = CreateTrayIcon();
+        if (!pluginMode)
+            _mainForm = new MainForm();
+        TrayIcon = CreateTrayIcon(pluginMode);
         TrayIcon.Visible = true;
         MemoryProfiler.ForceGcAndLog();
-        if (!Configurations.Instance.Settings.StartInTray)
-            _mainForm.Show();
-        else
+        if (!pluginMode && !Configurations.Instance.Settings.StartInTray)
+            _mainForm?.Show();
+        else if (!pluginMode)
             ShowMinimizeToTrayNotification();
         Application.Run();
         cts.Cancel();
         _steamManager.ClearStatus();
         _sessionManager.Dispose();
     }
-    private static NotifyIcon CreateTrayIcon()
+    private static NotifyIcon CreateTrayIcon(bool pluginMode)
     {
         var showSettingsItem = new ToolStripMenuItem("显示设置");
         var showMainWindowItem = new ToolStripMenuItem("显示主窗口");
@@ -109,6 +122,7 @@ internal static class Program
         contextMenu.Items.AddRange(
             showMainWindowItem, showSettingsItem, new ToolStripSeparator(),
             exitMenuItem);
+        showMainWindowItem.Visible = !pluginMode;
         showSettingsItem.Click += (_, _) =>
         {
             using var settingsForm = new SettingsForm();

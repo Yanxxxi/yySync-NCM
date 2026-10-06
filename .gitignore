@@ -1,0 +1,4 @@
+bin/
+obj/
+build/
+plugin/state.json

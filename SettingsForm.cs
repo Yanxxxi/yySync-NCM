@@ -75,6 +75,7 @@ internal class SettingsForm : Form
         _autoStartCheckBox = new CheckBox
         {
             Text = "开机自启",
+            Enabled = !Program.IsPluginMode,
             Location = new Point(15, 25),
             AutoSize = true,
             BackColor = Color.White
@@ -394,7 +395,7 @@ internal class SettingsForm : Form
         settings.StatusPriority = _priorityArtistRadioButton!.Checked ? SteamStatusPriority.Artist : SteamStatusPriority.ProgressBar;
         Configurations.Instance.Save();
         Program.GetRpcManager()?.RequestStateRefresh();
-        if (isAutoStartChecked == Win32Api.AutoStart.Check()) return;
+        if (Program.IsPluginMode || isAutoStartChecked == Win32Api.AutoStart.Check()) return;
         var success = Win32Api.AutoStart.Set(isAutoStartChecked);
         if (!success)
         {

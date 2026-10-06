@@ -1,5 +1,6 @@
 #nullable disable
 using System;
+using System.ComponentModel;
 using System.Drawing;
 using System.Threading.Tasks;
 using System.Windows.Forms;
@@ -14,6 +15,7 @@ internal sealed class SteamLoginForm : Form
     private Label _lblStatus;
     private readonly SteamSessionManager _session;
     private bool _isLoginInProgress;
+    [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
     public bool LoginSucceeded { get; private set; }
     public SteamLoginForm(SteamSessionManager session)
     {
