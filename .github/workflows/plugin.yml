@@ -17,9 +17,6 @@ jobs:
       - uses: actions/setup-dotnet@v4
         with:
           dotnet-version: 9.0.x
-      - uses: ilammy/msvc-dev-cmd@v1
-        with:
-          arch: x64
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
@@ -47,12 +44,14 @@ jobs:
       - name: Verify credentials across process restart
         shell: pwsh
         run: |
-          dotnet build tests/session/SessionChecks.csproj -c Release
+          # MSVC can set Platform=x64, which changes the default bin directory.
+          # Use an explicit platform and output directory for both child processes.
+          dotnet build tests/session/SessionChecks.csproj -c Release -p:Platform=AnyCPU --output build/session-checks
           if ($LASTEXITCODE -ne 0) { throw 'Session checks build failed' }
           $env:YYSYNC_CONFIG_DIRECTORY = Join-Path $PWD 'build/session-fixture'
-          dotnet tests/session/bin/Release/net9.0/SessionChecks.dll write
+          dotnet build/session-checks/SessionChecks.dll write
           if ($LASTEXITCODE -ne 0) { throw 'Credential save check failed' }
-          dotnet tests/session/bin/Release/net9.0/SessionChecks.dll verify
+          dotnet build/session-checks/SessionChecks.dll verify
           if ($LASTEXITCODE -ne 0) { throw 'Credential reload check failed' }
       - uses: actions/upload-artifact@v4
         with:
