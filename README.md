@@ -2,30 +2,23 @@
 
 将网易云音乐的歌曲、歌手和播放进度同步到 Steam 好友状态的 **BetterNCM 插件**。
 
-当前版本 **0.2.2**。Steam 连接运行在网易云进程内，登录、验证码和显示设置都位于 BetterNCM 的 yySync-NCM 页面。插件包不包含或启动独立应用程序，也没有托盘窗口。
+
 
 ## 功能与兼容性
 
-- 支持网易云音乐 **2.10.13**；3.x 需要使用 InfLink-rs 已适配的客户端版本。
-- 同一个包提供 x86/x64 后端，由 BetterNCM 按客户端位数加载。
+- 支持网易云音乐 **2.10.13**；3.x 。
 - 支持显示歌手、进度条、暂停状态、自定义前缀、长度优先级和实时预览。
 - 保存 Steam 刷新令牌与设备验证数据，重启自动登录；临时连接失败保留凭据。
-- 通过 [InfLink-rs](https://github.com/apoint123/inflink-rs) 的 `window.InfLinkApi` 获取播放信息。
+- 通过 `window.InfLinkApi` 获取播放信息。
 
 ## 安装与使用
 
-1. 安装 [BetterNCM](https://github.com/std-microblock/chromatic/tree/v2) 和 InfLink-rs，确认 InfLink-rs 能正常获取播放信息。
+1. 安装 [BetterNCM](https://github.com/std-microblock/chromatic/tree/v2) 和 SMTC协议支持插件，确认 InfLinkApi能正常获取播放信息。
 2. 从本仓库 [Actions](https://github.com/Yanxxxi/yySync-NCM/actions) 中成功的 **Build BetterNCM plugin** 下载构建产物，解压后取得 `yySyncNCM.plugin`。
 3. 彻底退出网易云，将插件包放入 BetterNCM 数据目录的 `plugins` 文件夹；更新时删除旧 yySync 插件包，只保留一个版本。
-4. 重新启动网易云，打开 **BetterNCM → yySync-NCM**，登录 Steam 并调整显示设置。
+4. 重新启动网易云，打开 **BetterNCM → yySync-NCM**，登录 Steam 并调整设置。
 
-插件包已包含所需运行库 DLL，无需另装 .NET。原生 DLL 更新必须完全退出网易云后重启，仅重载页面不能更新 DLL。若曾使用旧独立版，请先退出旧 `yySync.exe`。
 
-### Steam 登录
-
-密码仅用于本次登录，不保存。刷新令牌、设备验证数据和显示配置继续使用 `%LOCALAPPDATA%\yySync\config.json`，兼容旧配置，更新时无需删除它。
-
-首次授权或 Steam 拒绝、撤销令牌后仍可能需要手机确认或验证码。超时、断网等临时错误不会清除令牌。点击“退出登录”会清除已保存的授权。
 
 ## 项目结构
 
@@ -39,7 +32,6 @@ licenses/           随包依赖的许可证和版权声明
 .github/workflows/  GitHub Actions 自动构建
 ```
 
-本仓库已移除独立版启动入口、WinForms 窗体、托盘、自启动、多播放器适配、进程内存读取、内存优化工具、旧辅助程序桥接和独立版工程。保留的 Steam 核心已整理到插件后端，测试宿主仅用于开发验证，不进入插件包。
 
 ## 构建与验证
 
