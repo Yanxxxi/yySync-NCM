@@ -10,6 +10,7 @@ class Element {
 }
 let onLoad, onConfig, interval;
 const requests = [];
+const openedUrls = [];
 const state = { ok: true, loggedOn: false, busy: false, username: "saved-account", hasToken: true,
   preview: "测试歌曲 - 歌手", settings: { enableSteamSync: true, showArtistName: true,
   showProgressBar: true, showPausedStatus: true, enableCustomPrefix: false,
@@ -19,9 +20,9 @@ const context = {
     getCurrentSong: () => ({ songName: "测试歌曲", authorName: "歌手", ncmId: 42, duration: 180000 }),
     getTimeline: () => ({ currentTime: 12000, totalTime: 180000 }), getPlaybackStatus: () => "Playing"
   } },
-  document: { createElement: tag => new Element(tag) },
+  document: { createElement: tag => new Element(tag), createTextNode: text => Object.assign(new Element("#text"), { textContent: text }) },
   plugin: { onLoad: fn => onLoad = fn, onConfig: fn => onConfig = fn },
-  betterncm: { ncm: { openUrl() {} } },
+  betterncm: { ncm: { openUrl: url => openedUrls.push(url) } },
   betterncm_native: { native_plugin: { call: (name, args) => {
     assert.equal(name, "yysync.dispatch");
     const request = JSON.parse(args[0]); requests.push(request);
@@ -37,6 +38,9 @@ onLoad();
 const root = onConfig();
 const all = node => [node, ...node.children.flatMap(all)];
 const nodes = all(root);
+nodes.find(n => n.textContent === "源代码").trigger("click");
+nodes.find(n => n.textContent === "问题反馈").trigger("click");
+assert.deepEqual(openedUrls, ["https://github.com/Yanxxxi/yySync-NCM", "https://github.com/Yanxxxi/yySync-NCM/issues"]);
 const username = nodes.find(n => n["aria-label"] === "Steam 用户名");
 const password = nodes.find(n => n["aria-label"] === "Steam 密码");
 assert.equal(username.value, "saved-account");

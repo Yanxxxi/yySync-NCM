@@ -162,7 +162,9 @@
   const previewCard = card("▷", "状态预览", "显示当前歌曲按上述设置生成的文字。");
   previewCard.append(preview);
   const footer = element("p", null, "ys-note");
-  footer.append(link("源代码与问题反馈", "https://github.com/Yanxxxi/yySync-NCM"));
+  footer.append(link("源代码", "https://github.com/Yanxxxi/yySync-NCM"),
+    document.createTextNode(" · "),
+    link("问题反馈", "https://github.com/Yanxxxi/yySync-NCM/issues"));
   root.append(footer);
 
   function render() {

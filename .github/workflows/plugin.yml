@@ -9,6 +9,10 @@ on:
 permissions:
   contents: read
 
+concurrency:
+  group: yysync-plugin-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   build:
     runs-on: windows-latest
@@ -55,6 +59,71 @@ jobs:
           if ($LASTEXITCODE -ne 0) { throw 'Credential reload check failed' }
       - uses: actions/upload-artifact@v4
         with:
-          name: yySyncNCM-0.2.2-plugin
+          name: yySyncNCM-0.2.3-plugin
           path: build/yySyncNCM.plugin
           if-no-files-found: error
+
+  publish-store:
+    name: Publish store distribution
+    needs: build
+    if: github.repository == 'Yanxxxi/yySync-NCM' && github.ref == 'refs/heads/feature/betterncm-plugin' && (github.event_name == 'push' || github.event_name == 'workflow_dispatch')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/download-artifact@v4
+        with:
+          name: yySyncNCM-0.2.3-plugin
+          path: build/package
+      - name: Publish verified package to release branch
+        shell: bash
+        run: |
+          set -euo pipefail
+          # Only publish the current source commit; older runs cannot roll back the store.
+          current_source=$(git ls-remote origin refs/heads/feature/betterncm-plugin | cut -f1)
+          if [ "$current_source" != "$GITHUB_SHA" ]; then
+            echo "Source branch advanced; the newer run will publish."
+            exit 0
+          fi
+          stage=$(mktemp -d)
+          trap 'rm -rf "$stage"' EXIT
+          unzip -q build/package/yySyncNCM.plugin -d "$stage/dist"
+          # Preserve the maintainer's README exactly as committed to the source branch.
+          git show "$GITHUB_SHA:README.md" > "$stage/README.md"
+          export STORE_STAGE="$stage"
+          python3 - <<'PY'
+          import hashlib, json, os
+          from pathlib import Path
+          package = Path("build/package/yySyncNCM.plugin")
+          stage = Path(os.environ["STORE_STAGE"])
+          info = {
+              "source_repository": "https://github.com/" + os.environ["GITHUB_REPOSITORY"],
+              "source_commit": os.environ["GITHUB_SHA"],
+              "source_branch": "feature/betterncm-plugin",
+              "actions_run": "https://github.com/" + os.environ["GITHUB_REPOSITORY"] + "/actions/runs/" + os.environ["GITHUB_RUN_ID"],
+              "package_sha256": hashlib.sha256(package.read_bytes()).hexdigest(),
+              "version": json.loads((stage / "dist/manifest.json").read_text())["version"]
+          }
+          (stage / "BUILD-INFO.json").write_text(json.dumps(info, indent=2) + "\n")
+          PY
+          if [ -n "$(git ls-remote origin refs/heads/release)" ]; then
+            git fetch origin release
+            git checkout --detach FETCH_HEAD
+          else
+            git checkout --orphan release
+          fi
+          # This is the disposable Actions checkout. Keep only the distribution tree.
+          git rm -r -f --ignore-unmatch -- .
+          cp -a "$stage/." .
+          git add README.md BUILD-INFO.json dist
+          if git diff --cached --quiet; then
+            echo "Store distribution is already current."
+            exit 0
+          fi
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git commit -m "Publish yySync-NCM from $GITHUB_SHA"
+          git push origin HEAD:refs/heads/release

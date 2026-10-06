@@ -67,7 +67,7 @@ foreach ($arch in $architectures) {
         Copy-Item -LiteralPath (Join-Path $runtimeRoot $notice) -Destination (Join-Path $payload 'runtime')
     }
 }
-Copy-Item -LiteralPath (Join-Path $repo 'plugin/index.js'), (Join-Path $repo 'plugin/manifest.json'), (Join-Path $repo 'LICENSE'), (Join-Path $repo 'NOTICE.md') -Destination $stage
+Copy-Item -LiteralPath (Join-Path $repo 'plugin/index.js'), (Join-Path $repo 'plugin/manifest.json'), (Join-Path $repo 'plugin/preview.png'), (Join-Path $repo 'LICENSE'), (Join-Path $repo 'NOTICE.md') -Destination $stage
 Copy-Item -LiteralPath (Join-Path $repo 'licenses') -Destination $stage -Recurse
 $zip = Join-Path $repo 'build/yySyncNCM.zip'
 $package = Join-Path $repo 'build/yySyncNCM.plugin'
