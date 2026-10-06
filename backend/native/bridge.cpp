@@ -89,6 +89,11 @@ static void LoadManaged() {
     if (!count || count >= root.size()) throw std::runtime_error("Cannot read yySync backend path");
     root.resize(count);
     root.resize(root.find_last_of(L"\\/") + 1);
+#if defined(_WIN64)
+    root += L"x64\\";
+#else
+    root += L"x86\\";
+#endif
     auto assembly = root + L"managed\\yySync.Managed.dll";
     auto config = root + L"managed\\yySync.Managed.runtimeconfig.json";
     auto runtimeRoot = root + L"runtime";
@@ -159,10 +164,11 @@ static char* __cdecl Dispatch(void** args) {
 
 extern "C" __declspec(dllexport) int __cdecl BetterNCMPluginMain(PluginAPI* api) {
     if (!api || !api->addNativeAPI) return -1;
-    if (api->processType != 0x10) return 0; // Only the renderer hosts JavaScript.
+    if (!(api->processType & 0x10)) return 0; // Renderer is a process-type flag.
     HMODULE pinned;
     GetModuleHandleExW(GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS | GET_MODULE_HANDLE_EX_FLAG_PIN,
         reinterpret_cast<LPCWSTR>(&BetterNCMPluginMain), &pinned);
     static const NativeAPIType arguments[] = {NativeAPIType::String};
-    return api->addNativeAPI(arguments, 1, "yysync.dispatch", Dispatch);
+    api->addNativeAPI(arguments, 1, "yysync.dispatch", Dispatch);
+    return 0;
 }

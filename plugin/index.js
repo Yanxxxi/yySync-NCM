@@ -69,7 +69,12 @@
     return node;
   };
   const call = (request) => {
-    const result = betterncm_native.native_plugin.call("yysync.dispatch", [JSON.stringify(request)]);
+    const native = betterncm_native.native_plugin;
+    const registered = native.getRegisteredAPIs?.();
+    if (Array.isArray(registered) && !registered.includes("yysync.dispatch")) {
+      throw new Error("原生接口未注册。请安装包含 x86/x64 后端的 0.2.1 或更新插件包，彻底退出网易云后重启；仍失败时查看 BetterNCM 的 log.log 中 yySyncNCM 加载错误");
+    }
+    const result = native.call("yysync.dispatch", [JSON.stringify(request)]);
     const response = typeof result === "string" ? JSON.parse(result) : result;
     if (!response?.ok) throw new Error(response?.error || "原生组件未返回有效数据");
     return response;
@@ -164,8 +169,13 @@
     if (!state) {
       accountStatus.textContent = "原生组件尚未就绪";
       errorText.textContent = fatal;
+      login.disabled = true; logout.disabled = true; retry.disabled = false;
+      retry.textContent = "重试加载组件";
+      for (const input of Object.values(controls)) input.disabled = true;
       return;
     }
+    retry.textContent = "重试自动登录";
+    for (const input of Object.values(controls)) input.disabled = false;
     if (!populated) {
       for (const [name, input] of Object.entries(controls)) {
         if (input.type === "checkbox") input.checked = !!state.settings[name];
@@ -197,7 +207,7 @@
       initialized = true; fatal = ""; render();
     } catch (error) {
       initialized = false;
-      fatal = `无法加载 yySync 原生组件：${error.message || error}。请确认使用网易云音乐 3.x x64，并安装完整插件包后彻底退出并重启网易云。`;
+      fatal = `无法加载 yySync 原生组件：${error.message || error}。请安装完整插件包后彻底退出并重启网易云。支持网易云 2.10.13 和 3.x，需要 InfLink-rs。`;
       render();
     }
   }
@@ -234,4 +244,5 @@
     window.addEventListener("beforeunload", stop);
   });
   plugin.onConfig(() => root);
+  plugin.onAllPluginsLoaded?.(() => { if (!initialized) { initialize(); poll(); } });
 })();

@@ -26,14 +26,20 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
+      - name: Install private x86 runtime for packaging
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force build | Out-Null
+          Invoke-WebRequest https://dot.net/v1/dotnet-install.ps1 -OutFile build/dotnet-install.ps1
+          ./build/dotnet-install.ps1 -Channel 9.0 -Runtime dotnet -Architecture x86 -InstallDir build/dotnet-x86 -NoPath
+          if (-not (Test-Path build/dotnet-x86/host/fxr)) { throw 'x86 runtime installation failed' }
       - name: Build in-process plugin and bundled runtime
         shell: pwsh
-        run: ./scripts/build-plugin.ps1 -Compiler cl
+        run: ./scripts/build-plugin.ps1 -Compiler cl -RuntimeRootX86 (Join-Path $PWD 'build/dotnet-x86')
       - name: Verify native ABI, process exit and settings
         shell: pwsh
         run: |
-          cl /nologo /std:c++17 /EHsc /MT /O2 tests/native-host.cpp /Fe:build/native-host.exe /Fo:build/native-host.obj
-          if ($LASTEXITCODE -ne 0) { throw 'Native test host build failed' }
+          ./scripts/build-native-hosts.ps1
           python tests/native-smoke.py
           if ($LASTEXITCODE -ne 0) { throw 'Native smoke checks failed' }
           node tests/ui-flow.cjs
@@ -50,6 +56,6 @@ jobs:
           if ($LASTEXITCODE -ne 0) { throw 'Credential reload check failed' }
       - uses: actions/upload-artifact@v4
         with:
-          name: yySyncNCM-0.2.0-plugin
+          name: yySyncNCM-0.2.1-plugin
           path: build/yySyncNCM.plugin
           if-no-files-found: error

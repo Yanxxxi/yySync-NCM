@@ -10,6 +10,8 @@
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
   </PropertyGroup>
   <ItemGroup>
+    <PackageDownload Include="Microsoft.NETCore.App.Host.$(RuntimeIdentifier)" Version="[9.0.0]"
+                     Condition="'$(RuntimeIdentifier)' == 'win-x86' Or '$(RuntimeIdentifier)' == 'win-x64'" />
     <Compile Include="../../Configurations.cs" Link="Configurations.cs" />
     <Compile Include="../../SteamSessionManager.cs" Link="SteamSessionManager.cs" />
     <Compile Include="../../SteamStatusManager.cs" Link="SteamStatusManager.cs" />

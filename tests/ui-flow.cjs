@@ -29,7 +29,7 @@ const context = {
     if (request.type === "guard") { state.busy = false; state.guard = null; state.loggedOn = true; }
     if (request.type === "configure") Object.assign(state.settings, request.settings);
     return JSON.stringify(state);
-  } } },
+  }, getRegisteredAPIs: () => ["yysync.dispatch"] } },
   setInterval: fn => { interval = fn; return 1; }, clearInterval() {}
 };
 vm.runInNewContext(fs.readFileSync("plugin/index.js", "utf8"), context);
@@ -57,4 +57,18 @@ assert.equal(requests.at(-1).currentTimeMs, 12000);
 context.window.__yySyncNcmPlugin.stop();
 assert.equal(requests.at(-1).type, "shutdown");
 assert.doesNotMatch(fs.readFileSync("plugin/index.js", "utf8"), /app\.exec|writeFileText|yySync\.exe/);
+// A failed native DLL load must show a useful diagnostic and prevent login calls.
+context.betterncm_native.native_plugin.getRegisteredAPIs = () => ["inflink.dispatch"];
+const beforeMissingApi = requests.length;
+vm.runInNewContext(fs.readFileSync("plugin/index.js", "utf8"), context);
+onLoad();
+const unavailable = all(onConfig());
+assert.equal(requests.length, beforeMissingApi);
+assert.equal(unavailable.find(n => n.textContent === "登录").disabled, true);
+assert.equal(unavailable.find(n => n["aria-label"] === "显示歌手").disabled, true);
+assert.match(unavailable.find(n => n.className === "ys-error").textContent, /原生接口未注册/);
+context.betterncm_native.native_plugin.getRegisteredAPIs = () => ["yysync.dispatch"];
+unavailable.find(n => n.textContent === "重试加载组件").trigger("click");
+assert.equal(unavailable.find(n => n.textContent === "登录").disabled, false);
+context.window.__yySyncNcmPlugin.stop();
 console.log("Settings UI, native-only transport, password handling and guard-code flow passed");

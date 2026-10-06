@@ -16,7 +16,7 @@ static int __cdecl Add(const int* types, int count, const char* name, Function f
     if (count != 1 || types[0] != 3 || std::string(name) != "yysync.dispatch") return -1;
     dispatch = function;
     registrations++;
-    return 0;
+    return 1; // BetterNCM's implementation returns true, unlike its older wiki.
 }
 int main(int argc, char** argv) {
     SetErrorMode(SEM_FAILCRITICALERRORS | SEM_NOGPFAULTERRORBOX);
@@ -27,7 +27,7 @@ int main(int argc, char** argv) {
     if (!entry) return 4;
     Api api{Add, "1.3.4", 1, nullptr};
     if (entry(&api) != 0 || registrations != 0) return 5;
-    api.process = 0x10;
+    api.process = 0x11; // Renderer flag may be combined with other flags.
     if (entry(&api) != 0 || registrations != 1 || !dispatch) return 6;
     std::string request;
     while (std::getline(std::cin, request)) {
