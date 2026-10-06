@@ -25,7 +25,7 @@ $exports = Join-Path $repo 'backend/native/bridge.def'
 foreach ($arch in $architectures) {
     $payload = Join-Path $stage $arch
     $managed = Join-Path $payload 'managed'
-    & $dotnetSdk publish (Join-Path $repo 'backend/managed/yySync.Managed.csproj') -c Release -r "win-$arch" "-p:PlatformTarget=$arch" -p:Platform=AnyCPU --self-contained false --output $managed
+    & $dotnetSdk publish (Join-Path $repo 'backend/managed/yySync.Managed.csproj') -c Release -r "win-$arch" "-p:PlatformTarget=$arch" -p:Platform=AnyCPU -p:DebugType=None -p:DebugSymbols=false --self-contained false --output $managed
     if ($LASTEXITCODE -ne 0) { throw "Managed $arch backend build failed." }
     $hostPackRoot = Join-Path $dotnetRoot "packs/Microsoft.NETCore.App.Host.win-$arch"
     $hostPack = Get-ChildItem -LiteralPath $hostPackRoot -Directory -ErrorAction SilentlyContinue |
@@ -57,17 +57,20 @@ foreach ($arch in $architectures) {
     $fxr = Get-ChildItem (Join-Path $runtimeRoot 'host/fxr') -Directory |
         Where-Object Name -Like '9.*' | Sort-Object { [version]$_.Name } -Descending | Select-Object -First 1
     if (-not $runtime -or -not $fxr) { throw "Install .NET 9 $arch runtime before building, or set RuntimeRoot$arch." }
-    $runtimeDestination = Join-Path $payload 'runtime/shared/Microsoft.NETCore.App'
-    $fxrDestination = Join-Path $payload 'runtime/host/fxr'
+    $runtimeDestination = Join-Path $payload ('runtime/shared/Microsoft.NETCore.App/' + $runtime.Name)
+    $fxrDestination = Join-Path $payload ('runtime/host/fxr/' + $fxr.Name)
     New-Item -ItemType Directory -Force $runtimeDestination, $fxrDestination | Out-Null
-    Copy-Item -LiteralPath $runtime.FullName -Destination $runtimeDestination -Recurse
-    Remove-Item -LiteralPath (Join-Path $runtimeDestination ($runtime.Name + '/createdump.exe')) -ErrorAction SilentlyContinue
-    Copy-Item -LiteralPath $fxr.FullName -Destination $fxrDestination -Recurse
+    # Bundle the shared framework and its dependency map, without SDK/installer
+    # markers, diagnostic executables or debug symbols.
+    Get-ChildItem -LiteralPath $runtime.FullName -File |
+        Where-Object { $_.Extension -eq '.dll' -or $_.Name -eq 'Microsoft.NETCore.App.deps.json' } |
+        Copy-Item -Destination $runtimeDestination
+    Copy-Item -LiteralPath (Join-Path $fxr.FullName 'hostfxr.dll') -Destination $fxrDestination
     foreach ($notice in @('LICENSE.txt', 'ThirdPartyNotices.txt')) {
         Copy-Item -LiteralPath (Join-Path $runtimeRoot $notice) -Destination (Join-Path $payload 'runtime')
     }
 }
-Copy-Item -LiteralPath (Join-Path $repo 'plugin/index.js'), (Join-Path $repo 'plugin/manifest.json'), (Join-Path $repo 'plugin/preview.png'), (Join-Path $repo 'LICENSE'), (Join-Path $repo 'NOTICE.md') -Destination $stage
+Copy-Item -LiteralPath (Join-Path $repo 'plugin/index.js'), (Join-Path $repo 'plugin/manifest.json'), (Join-Path $repo 'plugin/preview.png'), (Join-Path $repo 'plugin/.betterncm-ignore'), (Join-Path $repo 'LICENSE'), (Join-Path $repo 'NOTICE.md') -Destination $stage
 Copy-Item -LiteralPath (Join-Path $repo 'licenses') -Destination $stage -Recurse
 $zip = Join-Path $repo 'build/yySyncNCM.zip'
 $package = Join-Path $repo 'build/yySyncNCM.plugin'

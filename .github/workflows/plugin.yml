@@ -40,6 +40,8 @@ jobs:
       - name: Verify native ABI, process exit and settings
         shell: pwsh
         run: |
+          python tests/package-layout.py
+          if ($LASTEXITCODE -ne 0) { throw 'Store package layout checks failed' }
           ./scripts/build-native-hosts.ps1
           python tests/native-smoke.py
           if ($LASTEXITCODE -ne 0) { throw 'Native smoke checks failed' }
@@ -59,7 +61,7 @@ jobs:
           if ($LASTEXITCODE -ne 0) { throw 'Credential reload check failed' }
       - uses: actions/upload-artifact@v4
         with:
-          name: yySyncNCM-0.2.3-plugin
+          name: yySyncNCM-0.2.4-plugin
           path: build/yySyncNCM.plugin
           if-no-files-found: error
 
@@ -76,7 +78,7 @@ jobs:
           fetch-depth: 0
       - uses: actions/download-artifact@v4
         with:
-          name: yySyncNCM-0.2.3-plugin
+          name: yySyncNCM-0.2.4-plugin
           path: build/package
       - name: Publish verified package to release branch
         shell: bash

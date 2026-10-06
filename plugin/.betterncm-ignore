@@ -1,0 +1,14 @@
+*[.]pdb
+*[.]obj
+*[.]lib
+*[.]exp
+*[.]exe
+*/[.]version
+/README[.]md
+/BUILD-INFO[.]json
+/[.]github/
+/backend/
+/scripts/
+/tests/
+/bin/
+/obj/

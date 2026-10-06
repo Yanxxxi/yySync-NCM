@@ -3,7 +3,7 @@
   "manifest_version": 1,
   "name": "yySync-NCM",
   "slug": "yySyncNCM",
-  "version": "0.2.3",
+  "version": "0.2.4",
   "betterncm_version": ">=1.0.0",
   "author": "Yanxxxi",
   "author_link": "https://github.com/Yanxxxi/yySync-NCM",
