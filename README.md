@@ -11,6 +11,8 @@
 
 播放快照位于 BetterNCM 数据目录的 `yySyncNCM-state.json`。停止播放或退出网易云音乐后，Steam 状态会清除；异常退出时最多等待 5 秒清除，辅助进程在快照持续失效 1 分钟后退出。Steam 登录信息仍保存在 `%LOCALAPPDATA%\yySync\config.json`。
 
+**从 0.1.0 升级：**旧版辅助程序直接从 `plugins_runtime` 运行，会阻止 BetterNCM 清理该目录。如果重启时看到 `remove_all: 拒绝访问`，先关闭网易云音乐，再从系统托盘退出 yySync；找不到托盘图标时，在任务管理器中结束 `yySync.exe`。随后替换为 0.1.1 插件包并重启。新版会把实际运行的程序复制到 `%LOCALAPPDATA%\yySync\plugin-helper`，避免占用插件解压目录。
+
 开发者可直接将 `plugin` 目录复制到 BetterNCM 的 `plugins_dev`，但需要把 `dotnet publish` 生成的 `yySync.exe` 放到同一目录。完整打包和自包含构建见 `.github/workflows/plugin.yml`。架构取舍与后续工作见 [PLUGIN_DESIGN.md](PLUGIN_DESIGN.md)。
 
 ### ✨ 主要功能

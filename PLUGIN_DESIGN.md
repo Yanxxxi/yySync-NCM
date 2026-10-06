@@ -4,7 +4,7 @@
 
 当前实现为独立 BetterNCM 插件，依赖 InfLink-rs 的公开 `window.InfLinkApi` 获取播放状态。插件每秒把最小播放快照写入自己的运行目录；原 .NET 程序新增 `--betterncm <state.json>` 模式，读取快照并沿用 SteamKit2 登录、状态格式化与托盘设置。插件模式不会扫描网易云进程内存，也不会启动原来的多播放器轮询。
 
-SteamKit2 是 .NET 库，而 BetterNCM 的普通 JavaScript 插件无法直接承载它。因此，在不重新实现 Steam 协议的前提下，插件包需要包含一个原生辅助进程。辅助进程由 BetterNCM 的 `app.exec` 启动，保持现有 Steam 登录流程；无需修改 inflink-rs 仓库。
+SteamKit2 是 .NET 库，而 BetterNCM 的普通 JavaScript 插件无法直接承载它。因此，在不重新实现 Steam 协议的前提下，插件包需要包含一个原生辅助进程。BetterNCM 的 `app.exec` 启动打包内的短暂引导程序；它按文件哈希把运行程序复制到 `%LOCALAPPDATA%\yySync\plugin-helper` 后退出。实际运行的进程不占用 `plugins_runtime`，保持现有 Steam 登录流程；无需修改 inflink-rs 仓库。
 
 ## 两种路径的难度
 

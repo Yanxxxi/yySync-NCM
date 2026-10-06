@@ -19,7 +19,20 @@ internal static class Program
     [STAThread]
     private static void Main(string[] args)
     {
-        var pluginMode = args.Length == 2 && args[0] == "--betterncm";
+        if (args.Length == 2 && args[0] == "--betterncm")
+        {
+            try
+            {
+                BetterNcmBootstrap.LaunchInstalledCopy(args[1]);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"无法启动 BetterNCM 同步组件：{ex.Message}", "yySync", MessageBoxButtons.OK,
+                    MessageBoxIcon.Error);
+            }
+            return;
+        }
+        var pluginMode = args.Length == 2 && args[0] == "--betterncm-installed";
         IsPluginMode = pluginMode;
         var bridgeFile = pluginMode ? args[1] : null;
         MemoryProfiler.LogMemorySnapshot("程序启动前");
