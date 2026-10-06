@@ -1,8 +1,8 @@
 {
   "source_repository": "https://github.com/Yanxxxi/yySync-NCM",
-  "source_commit": "2ef69cc4f2c393b0b8a8a1c1c5bf7231f56719b6",
+  "source_commit": "ff728d578297322dfbb49ffe4ebaac8e3adf774f",
   "source_branch": "feature/betterncm-plugin",
-  "actions_run": "https://github.com/Yanxxxi/yySync-NCM/actions/runs/37447387494",
-  "package_sha256": "c52f266e60403c0eec5cd5545edbeaae3145c969fc038259725819ad5e3b3d6a",
-  "version": "0.2.3"
+  "actions_run": "https://github.com/Yanxxxi/yySync-NCM/actions/runs/37450776745",
+  "package_sha256": "191c4c75849d7e8fc19e1879fd39bb89e1c90d37d654d20471afe35db1e64a1c",
+  "version": "0.2.4"
 }
