@@ -2,9 +2,12 @@ name: Build BetterNCM plugin
 
 on:
   push:
-    branches: [main]
+    branches: [main, 'feature/**']
   pull_request:
   workflow_dispatch:
+
+permissions:
+  contents: read
 
 jobs:
   build:
@@ -14,17 +17,39 @@ jobs:
       - uses: actions/setup-dotnet@v4
         with:
           dotnet-version: 9.0.x
-      - name: Publish Steam helper
-        run: dotnet publish MusicRpc.csproj --configuration Release --runtime win-x64 --self-contained true -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true -p:EnableCompressionInSingleFile=true -p:PublishTrimmed=false --output build/helper
-      - name: Assemble plugin
+      - uses: ilammy/msvc-dev-cmd@v1
+        with:
+          arch: x64
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Build in-process plugin and bundled runtime
+        shell: pwsh
+        run: ./scripts/build-plugin.ps1 -Compiler cl
+      - name: Verify native ABI, process exit and settings
         shell: pwsh
         run: |
-          New-Item -ItemType Directory -Force build/plugin | Out-Null
-          Copy-Item plugin/manifest.json, plugin/index.js, build/helper/yySync.exe build/plugin/
-          Compress-Archive -Path build/plugin/* -DestinationPath build/yySyncNCM.zip -Force
-          Move-Item build/yySyncNCM.zip build/yySyncNCM.plugin
+          cl /nologo /std:c++17 /EHsc /MT /O2 tests/native-host.cpp /Fe:build/native-host.exe /Fo:build/native-host.obj
+          if ($LASTEXITCODE -ne 0) { throw 'Native test host build failed' }
+          python tests/native-smoke.py
+          if ($LASTEXITCODE -ne 0) { throw 'Native smoke checks failed' }
+          node tests/ui-flow.cjs
+          if ($LASTEXITCODE -ne 0) { throw 'Settings UI checks failed' }
+      - name: Verify credentials across process restart
+        shell: pwsh
+        run: |
+          dotnet build tests/session/SessionChecks.csproj -c Release
+          if ($LASTEXITCODE -ne 0) { throw 'Session checks build failed' }
+          $env:YYSYNC_CONFIG_DIRECTORY = Join-Path $PWD 'build/session-fixture'
+          dotnet tests/session/bin/Release/net9.0/SessionChecks.dll write
+          if ($LASTEXITCODE -ne 0) { throw 'Credential save check failed' }
+          dotnet tests/session/bin/Release/net9.0/SessionChecks.dll verify
+          if ($LASTEXITCODE -ne 0) { throw 'Credential reload check failed' }
       - uses: actions/upload-artifact@v4
         with:
-          name: yySyncNCM-plugin
+          name: yySyncNCM-0.2.0-plugin
           path: build/yySyncNCM.plugin
           if-no-files-found: error

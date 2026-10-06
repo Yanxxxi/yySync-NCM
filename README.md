@@ -1,47 +1,49 @@
-# Music Steam RPC
+# yySync-NCM
 
-## BetterNCM 插件版
+## BetterNCM 插件版 0.2.0
 
-本仓库现提供 `yySyncNCM.plugin`。它通过 [InfLink-rs](https://github.com/apoint123/inflink-rs) 获取网易云音乐的当前歌曲、暂停状态与进度，并由随插件打包的 `yySync.exe` 使用 SteamKit2 同步至 Steam。插件版只同步网易云音乐；原独立程序仍保留 QQ 音乐和洛雪音乐支持。
+将网易云音乐的歌曲、歌手和播放进度同步至 Steam 好友状态。插件通过 [InfLink-rs](https://github.com/apoint123/inflink-rs) 获取播放信息，在网易云进程内运行 SteamKit2；没有额外应用程序、登录弹窗或托盘。登录与显示设置均集成到 BetterNCM 的 **yySync-NCM** 页面，采用卡片布局。
 
-1. 安装 [BetterNCM](https://github.com/std-microblock/chromatic/tree/v2) 和 InfLink-rs，并确认 InfLink-rs 正常读取播放信息。
-2. 从本仓库 Actions 的 **Build BetterNCM plugin** 构建产物下载 `yySyncNCM.plugin`，复制到 BetterNCM 数据目录下的 `plugins` 文件夹。
-3. 重启网易云音乐。第一次启动时随插件运行的组件会打开 Steam 登录窗口，之后会保留在系统托盘。可以在托盘的“显示设置”中调整歌手、进度条与前缀。
-4. 如果先前已运行独立版 yySync，请先退出它，避免两个实例争用同一个 Steam 会话。插件模式由网易云音乐启动，不需要启用独立版的开机自启。
+### 安装
 
-播放快照位于 BetterNCM 数据目录的 `yySyncNCM-state.json`。停止播放或退出网易云音乐后，Steam 状态会清除；异常退出时最多等待 5 秒清除，辅助进程在快照持续失效 1 分钟后退出。Steam 登录信息仍保存在 `%LOCALAPPDATA%\yySync\config.json`。
+1. 使用 **网易云音乐 3.x x64**，安装 [BetterNCM](https://github.com/std-microblock/chromatic/tree/v2) 和 InfLink-rs，并确认后者正常读取播放信息。
+2. 从个人仓库 Actions 的 **Build BetterNCM plugin** 产物下载并解压，取得 `yySyncNCM.plugin`。
+3. 将 `.plugin` 文件放入 BetterNCM 数据目录的 `plugins` 文件夹，彻底退出网易云后重新启动。包内已包含所需 .NET 运行库 DLL，无需另装 .NET。
+4. 打开 BetterNCM → **yySync-NCM**，输入 Steam 用户名和密码，按页面提示完成手机确认或验证码。首次登录后会保存授权，重启自动登录。
 
-**从 0.1.0 升级：**旧版辅助程序直接从 `plugins_runtime` 运行，会阻止 BetterNCM 清理该目录。如果重启时看到 `remove_all: 拒绝访问`，先关闭网易云音乐，再从系统托盘退出 yySync；找不到托盘图标时，在任务管理器中结束 `yySync.exe`。随后替换为 0.1.1 插件包并重启。新版会把实际运行的程序复制到 `%LOCALAPPDATA%\yySync\plugin-helper`，避免占用插件解压目录。
+**从 0.1.x 升级：**先关闭网易云，再从托盘退出旧版 yySync；找不到托盘图标时在任务管理器结束 `yySync.exe`。删除旧 `.plugin` 包并放入 0.2.0，最后重启。旧辅助进程仍运行会导致 `plugins_runtime` 拒绝访问，也会争用 Steam 会话。保留 `%LOCALAPPDATA%\yySync\config.json`，新版会沿用已有凭据。
 
-开发者可直接将 `plugin` 目录复制到 BetterNCM 的 `plugins_dev`，但需要把 `dotnet publish` 生成的 `yySync.exe` 放到同一目录。完整打包和自包含构建见 `.github/workflows/plugin.yml`。架构取舍与后续工作见 [PLUGIN_DESIGN.md](PLUGIN_DESIGN.md)。
+### 登录和设置
 
-### ✨ 主要功能
+- 密码不保存；刷新令牌和设备验证数据保存在 `%LOCALAPPDATA%\yySync\config.json`，不会返回设置页。
+- 认证成功后立即保存令牌。连接超时、断网等错误会保留凭据，不再因临时网络问题要求重新手机授权。
+- Steam 明确撤销或拒绝令牌后需要重新登录；首次授权及令牌失效时仍可能要求手机验证。
+- 支持歌手、播放进度、暂停时显示状态、自定义前缀和长度不足时的保留优先级，显示实时状态预览。
+- 关闭 Steam 同步、停止播放或正常退出网易云时清空状态。原生 DLL 更新需要完全退出并重启网易云，仅重载页面不足以更新 DLL。
 
-- 🎵 **多平台支持**: 网易云音乐、QQ 音乐、洛雪音乐 PC 客户端
-- 📡 **Steam 同步**: 通过 SteamKit2 连接 Steam 网络，将播放状态显示为非 Steam 游戏
-- 🎨 **高度自定义**:
-  - 图形化设置界面，支持实时预览
-  - 可选显示歌手名、进度条、自定义前缀文本
-  - 支持开机自启、最小化到托盘
-  
----
+### 本地构建
 
-### 📥 安装与使用
+安装 .NET 9 x64 SDK，以及 MSVC x64 编译工具或 MinGW x64，在仓库根目录运行：
 
-1. 确保系统已安装 **[.NET 9](https://dotnet.microsoft.com/download/dotnet/9.0)** 运行库  
-2. 下载最新版 `yySync.exe` 运行  
-3. 首次运行时需登录 Steam 帐号（支持 Steam Guard / 手机验证）  
-4. 登录成功后，打开音乐播放器即可自动同步状态到 Steam
-5. 洛雪音乐用户请注意 请在洛雪音乐 - 设置 - 开放API - 启用开放API服务，允许来自局域网的访问
+```powershell
+./scripts/build-plugin.ps1
+# 产物：build/yySyncNCM.plugin
+```
 
----
+MSVC 在开发者终端运行，可加 `-Compiler cl`；MinGW 可加 `-Compiler 'g++'`。开发调试可把完整 `build/inprocess` 目录放到 `plugins_dev`。自动构建见 [.github/workflows/plugin.yml](.github/workflows/plugin.yml)，架构及与 InfLink-rs 集成的难度评估见 [PLUGIN_DESIGN.md](PLUGIN_DESIGN.md)。
 
-### 🙏 致谢
+已验证原生接口、CLR 加载与进程退出、跨进程凭据保存、设置页交互及 UTF-8 长度限制。真实 Steam 手机授权、网易云内运行及重启自动登录需要安装后实机验证。
 
-本项目在开发过程中参考了以下优秀开源项目的设计思路与实现方式：
+## 原独立程序
 
+仓库保留独立版 `yySync.exe` 的源码，支持网易云音乐、QQ 音乐和洛雪音乐，以及图形设置、托盘、开机启动。其行为与 0.2.0 进程内插件不同，请只运行其中一个版本。
+
+独立版使用 .NET 9；首次运行需登录 Steam。洛雪音乐需在设置中启用开放 API 服务，允许来自局域网的访问。BetterNCM 插件版只同步网易云音乐。
+
+## 致谢
+
+- [InfLink-rs](https://github.com/apoint123/inflink-rs)
+- [BetterNCM](https://github.com/std-microblock/chromatic/tree/v2)
 - [ArchiSteamFarm](https://github.com/JustArchiNET/ArchiSteamFarm)
 - [Music-DiscordRPC](https://github.com/kriYamiHikari/Music-DiscordRPC)
 - [NetEase-Cloud-Music-DiscordRPC](https://github.com/Kxnrl/NetEase-Cloud-Music-DiscordRPC)
-
-感谢原作者们对开源社区的贡献 ❤️

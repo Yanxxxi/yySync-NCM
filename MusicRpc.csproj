@@ -36,6 +36,7 @@
     </PropertyGroup>
 
     <ItemGroup>
+        <Compile Remove="backend/**/*.cs;tests/**/*.cs" />
         <PackageReference Include="Microsoft.NETCore.Platforms" Version="7.0.4" />
         <PackageReference Include="Microsoft.Win32.Registry" Version="5.0.0" />
         <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />

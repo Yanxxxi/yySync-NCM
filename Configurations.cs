@@ -12,6 +12,7 @@ internal class ConfigData
     public bool StartInTray { get; set; }
     public bool ShowArtistName { get; set; } = true;
     public bool ShowProgressBar { get; set; } = true;
+    public bool ShowPausedStatus { get; set; } = true;
     public bool EnableSteamSync { get; set; } = true;
     public string SteamUsername { get; set; } = "";
     public string SteamRefreshToken { get; set; } = "";
@@ -29,14 +30,16 @@ internal class Configurations
 {
     public static readonly Configurations Instance = new();
     private static readonly JsonSerializerOptions SJsonOptions = new() { WriteIndented = true };
+    private readonly object _saveLock = new();
+    public string? StorageError { get; private set; }
     public ConfigData Settings { get; private set; }
     [JsonIgnore] public bool IsFirstLoad { get; }
     [JsonIgnore] private readonly string _path;
     private Configurations()
     {
         Settings = new ConfigData();
-        var dir = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-            "yySync");
+        var dir = Environment.GetEnvironmentVariable("YYSYNC_CONFIG_DIRECTORY") ??
+            Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "yySync");
         Directory.CreateDirectory(dir);
         _path = Path.Combine(dir, "config.json");
         if (File.Exists(_path))
@@ -52,14 +55,24 @@ internal class Configurations
     }
     public void Save()
     {
-        try
+        lock (_saveLock)
         {
-            var jsonString = JsonSerializer.Serialize(Settings, SJsonOptions);
-            File.WriteAllText(_path, jsonString, Encoding.UTF8);
-        }
-        catch (Exception e)
-        {
-            Console.WriteLine($"[ERROR] Failed to save configurations: {e.Message}");
+            var temporary = _path + ".tmp";
+            try
+            {
+                File.WriteAllText(temporary, JsonSerializer.Serialize(Settings, SJsonOptions), Encoding.UTF8);
+                File.Move(temporary, _path, true);
+                StorageError = null;
+            }
+            catch (Exception e)
+            {
+                StorageError = $"无法保存 yySync 登录与设置：{e.Message}";
+                throw new IOException(StorageError, e);
+            }
+            finally
+            {
+                if (File.Exists(temporary)) File.Delete(temporary);
+            }
         }
     }
     private void Load()
@@ -73,8 +86,8 @@ internal class Configurations
         }
         catch (Exception e)
         {
-            Debug.WriteLine($"[ERROR] Failed to load configuration, resetting to defaults: {e.Message}");
-            Save();
+            StorageError = $"无法读取 yySync 登录与设置：{e.Message}";
+            Debug.WriteLine(StorageError);
         }
     }
 }

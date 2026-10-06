@@ -1,6 +1,7 @@
 using System;
 using System.Diagnostics;
 using System.Linq;
+using System.Text;
 using System.Threading.Tasks;
 using MusicRpc.Models;
 namespace MusicRpc;
@@ -8,6 +9,7 @@ internal class SteamStatusManager
 {
     private readonly SteamSessionManager _session;
     private string _lastSetName = string.Empty;
+    private int _lastGeneration = -1;
     private const int ProgressBarLength = 10;
     public bool IsReady => _session.IsLoggedOn;
     public SteamStatusManager(SteamSessionManager session)
@@ -19,11 +21,12 @@ internal class SteamStatusManager
         if (!_session.IsLoggedOn) return;
         var config = Configurations.Instance.Settings;
         var newName = FormatStatusName(info, playerName, config);
-        if (newName == _lastSetName) return;
+        if (newName == _lastSetName && _lastGeneration == _session.SessionGeneration) return;
         try
         {
             await _session.SetGameNameAsync(newName).ConfigureAwait(false);
             _lastSetName = newName;
+            _lastGeneration = _session.SessionGeneration;
             Debug.WriteLine($"[SteamStatus] 状态已更新: {newName}");
         }
         catch (Exception ex)
@@ -55,19 +58,14 @@ internal class SteamStatusManager
         if (string.IsNullOrEmpty(str)) return str;
         var bytes = System.Text.Encoding.UTF8.GetBytes(str);
         if (bytes.Length <= maxBytes) return str;
-        var count = maxBytes;
-        while (count > 0 && (bytes[count] & 0xC0) == 0x80)
-        {
-            count--;
-        }
         int byteCount = 0;
         int charCount = 0;
-        foreach (var c in str)
+        foreach (var rune in str.EnumerateRunes())
         {
-            int cBytes = System.Text.Encoding.UTF8.GetByteCount(new [] { c });
+            int cBytes = rune.Utf8SequenceLength;
             if (byteCount + cBytes > maxBytes) break;
             byteCount += cBytes;
-            charCount++;
+            charCount += rune.Utf16SequenceLength;
         }
         return str.Substring(0, charCount);
     }

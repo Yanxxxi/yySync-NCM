@@ -1,0 +1,19 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net9.0</TargetFramework>
+    <AssemblyName>yySync.Managed</AssemblyName>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <EnableDynamicLoading>true</EnableDynamicLoading>
+    <GenerateRuntimeConfigurationFiles>true</GenerateRuntimeConfigurationFiles>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="../../Configurations.cs" Link="Configurations.cs" />
+    <Compile Include="../../SteamSessionManager.cs" Link="SteamSessionManager.cs" />
+    <Compile Include="../../SteamStatusManager.cs" Link="SteamStatusManager.cs" />
+    <Compile Include="../../Models/PlayerInfo.cs" Link="Models/PlayerInfo.cs" />
+    <PackageReference Include="SteamKit2" Version="3.4.0" />
+  </ItemGroup>
+</Project>

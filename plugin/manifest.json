@@ -2,15 +2,16 @@
   "manifest_version": 1,
   "name": "yySync-NCM",
   "slug": "yySyncNCM",
-  "version": "0.1.1",
+  "version": "0.2.0",
   "betterncm_version": ">=1.0.0",
   "author": "Yanxxxi",
   "author_link": "https://github.com/Yanxxxi/yySync-NCM",
-  "description": "将网易云音乐播放状态同步至 Steam 好友列表，需要 InfLink-rs。",
+  "description": "将播放状态同步至 Steam，进程内运行并提供内置设置页。需要 InfLink-rs，支持网易云 3.x x64。",
   "type": "extension",
   "ncm3-compatible": true,
   "requirements": ["InfLinkrs"],
   "loadAfter": ["InfLinkrs"],
+  "native_plugin": "backend.dll",
   "injects": {
     "Main": [{ "file": "index.js" }]
   }
