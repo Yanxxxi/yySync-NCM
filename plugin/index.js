@@ -219,8 +219,7 @@
       const timeline = api?.getTimeline();
       state = call({
         type: "playback",
-        song: song ? { id: String(song.trackId || song.ncmId || ""), title: song.songName || "",
-          artists: song.authorName || "", album: song.albumName || "" } : null,
+        song: song ? { title: song.songName || "", artists: song.authorName || "" } : null,
         paused: !api || api.getPlaybackStatus() !== "Playing",
         currentTimeMs: timeline?.currentTime || 0,
         durationMs: timeline?.totalTime || song?.duration || 0

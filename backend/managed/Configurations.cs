@@ -1,15 +1,12 @@
+// Derived from wuyan1337/yySync; adapted for BetterNCM on 2026-10-06. See NOTICE.md and LICENSE.
 using System;
 using System.Diagnostics;
 using System.IO;
 using System.Text;
 using System.Text.Json;
-using System.Text.Json.Serialization;
-namespace MusicRpc;
-internal class ConfigData
+namespace YySyncNcm;
+internal sealed class ConfigData
 {
-    public bool AutoStart { get; set; }
-    public bool CloseToTray { get; set; } = true;
-    public bool StartInTray { get; set; }
     public bool ShowArtistName { get; set; } = true;
     public bool ShowProgressBar { get; set; } = true;
     public bool ShowPausedStatus { get; set; } = true;
@@ -21,20 +18,19 @@ internal class ConfigData
     public bool EnableCustomPrefix { get; set; }
     public string CustomPrefix { get; set; } = "";
 }
-public enum SteamStatusPriority
+internal enum SteamStatusPriority
 {
     Artist,
     ProgressBar
 }
-internal class Configurations
+internal sealed class Configurations
 {
     public static readonly Configurations Instance = new();
     private static readonly JsonSerializerOptions SJsonOptions = new() { WriteIndented = true };
     private readonly object _saveLock = new();
     public string? StorageError { get; private set; }
     public ConfigData Settings { get; private set; }
-    [JsonIgnore] public bool IsFirstLoad { get; }
-    [JsonIgnore] private readonly string _path;
+    private readonly string _path;
     private Configurations()
     {
         Settings = new ConfigData();
@@ -44,12 +40,10 @@ internal class Configurations
         _path = Path.Combine(dir, "config.json");
         if (File.Exists(_path))
         {
-            IsFirstLoad = false;
             Load();
         }
         else
         {
-            IsFirstLoad = true;
             Save();
         }
     }

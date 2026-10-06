@@ -2,6 +2,7 @@
   <PropertyGroup>
     <TargetFramework>net9.0</TargetFramework>
     <AssemblyName>yySync.Managed</AssemblyName>
+    <RootNamespace>YySyncNcm</RootNamespace>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
@@ -12,10 +13,6 @@
   <ItemGroup>
     <PackageDownload Include="Microsoft.NETCore.App.Host.$(RuntimeIdentifier)" Version="[9.0.0]"
                      Condition="'$(RuntimeIdentifier)' == 'win-x86' Or '$(RuntimeIdentifier)' == 'win-x64'" />
-    <Compile Include="../../Configurations.cs" Link="Configurations.cs" />
-    <Compile Include="../../SteamSessionManager.cs" Link="SteamSessionManager.cs" />
-    <Compile Include="../../SteamStatusManager.cs" Link="SteamStatusManager.cs" />
-    <Compile Include="../../Models/PlayerInfo.cs" Link="Models/PlayerInfo.cs" />
     <PackageReference Include="SteamKit2" Version="3.4.0" />
   </ItemGroup>
 </Project>

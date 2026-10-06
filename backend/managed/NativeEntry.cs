@@ -2,7 +2,7 @@ using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Text.Json;
 
-namespace MusicRpc;
+namespace YySyncNcm;
 
 public static class NativeEntry
 {

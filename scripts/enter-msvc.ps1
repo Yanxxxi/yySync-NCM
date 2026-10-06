@@ -5,8 +5,11 @@ if (-not (Test-Path -LiteralPath $vswhere)) { throw 'Install Visual Studio C++ B
 $installation = & $vswhere -latest -products '*' -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 -property installationPath
 if (-not $installation) { throw 'Install the Visual Studio x86/x64 C++ toolset.' }
 $vcvars = Join-Path $installation 'VC/Auxiliary/Build/vcvarsall.bat'
+# Reset inherited MSVC variables before switching architectures. Otherwise
+# repeated builds append to PATH/INCLUDE until cmd exceeds its line limit.
 # Capture the environment privately, without printing it or writing it to disk.
-$compilerEnvironment = & $env:ComSpec /d /c "`"$vcvars`" $Architecture >nul && set"
+$resetCompiler = if ($env:VSCMD_VER) { "call `"$vcvars`" /clean_env >nul && " } else { '' }
+$compilerEnvironment = & $env:ComSpec /d /c "${resetCompiler}call `"$vcvars`" $Architecture >nul && set"
 if ($LASTEXITCODE -ne 0) { throw "Cannot configure MSVC for $Architecture" }
 foreach ($entry in $compilerEnvironment) {
     if ($entry -match '^([^=]+)=(.*)$') {

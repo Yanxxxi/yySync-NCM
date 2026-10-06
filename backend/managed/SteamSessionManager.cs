@@ -1,3 +1,4 @@
+// Derived from wuyan1337/yySync; adapted for BetterNCM on 2026-10-06. See NOTICE.md and LICENSE.
 using System;
 using System.Diagnostics;
 using System.Threading;
@@ -5,7 +6,7 @@ using System.Threading.Tasks;
 using SteamKit2;
 using SteamKit2.Authentication;
 using SteamKit2.Internal;
-namespace MusicRpc;
+namespace YySyncNcm;
 
 internal sealed record GuardChallenge(string Kind, bool PreviousCodeIncorrect = false);
 internal sealed class SteamSessionManager : IDisposable
@@ -27,9 +28,7 @@ internal sealed class SteamSessionManager : IDisposable
     public bool IsConnected => _steamClient?.IsConnected ?? false;
     public bool IsLoggedOn { get; private set; }
     public int SessionGeneration => _generation;
-    public string? Username { get; private set; }
     public string? LoginError { get; private set; }
-    public event Action<bool>? OnSteamGuardRequired;
     public event Action<GuardChallenge?>? OnGuardChallenge;
 
     private static TaskCompletionSource<bool> NewCompletion() =>
@@ -109,7 +108,6 @@ internal sealed class SteamSessionManager : IDisposable
             if (!await EnsureConnectedAsync()) return false;
             var config = Configurations.Instance.Settings;
             var sameAccount = string.Equals(config.SteamUsername, username, StringComparison.OrdinalIgnoreCase);
-            Username = username;
             LoginError = null;
             using var authTimeout = CancellationTokenSource.CreateLinkedTokenSource(_cts.Token);
             authTimeout.CancelAfter(TimeSpan.FromMinutes(3));
@@ -158,7 +156,6 @@ internal sealed class SteamSessionManager : IDisposable
 
     private async Task<bool> LogOnAsync(string username, string refreshToken)
     {
-        Username = username;
         LoginError = null;
         _loggedOn = new(TaskCreationOptions.RunContinuationsAsynchronously);
         _steamUser!.LogOn(new SteamUser.LogOnDetails
@@ -234,7 +231,6 @@ internal sealed class SteamSessionManager : IDisposable
         {
             manager._guardCode = new(TaskCreationOptions.RunContinuationsAsynchronously);
             manager.OnGuardChallenge?.Invoke(new GuardChallenge(kind, incorrect));
-            manager.OnSteamGuardRequired?.Invoke(kind == "deviceCode");
             return manager._guardCode.Task.WaitAsync(cancellation);
         }
         public Task<string> GetDeviceCodeAsync(bool previousCodeWasIncorrect) =>
@@ -244,7 +240,6 @@ internal sealed class SteamSessionManager : IDisposable
         public Task<bool> AcceptDeviceConfirmationAsync()
         {
             manager.OnGuardChallenge?.Invoke(new GuardChallenge("confirmation"));
-            manager.OnSteamGuardRequired?.Invoke(true);
             return Task.FromResult(true);
         }
     }

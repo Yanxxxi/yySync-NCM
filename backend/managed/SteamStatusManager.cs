@@ -1,26 +1,25 @@
+// Derived from wuyan1337/yySync; adapted for BetterNCM on 2026-10-06. See NOTICE.md and LICENSE.
 using System;
 using System.Diagnostics;
-using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using MusicRpc.Models;
-namespace MusicRpc;
-internal class SteamStatusManager
+using YySyncNcm.Models;
+namespace YySyncNcm;
+internal sealed class SteamStatusManager
 {
     private readonly SteamSessionManager _session;
     private string _lastSetName = string.Empty;
     private int _lastGeneration = -1;
     private const int ProgressBarLength = 10;
-    public bool IsReady => _session.IsLoggedOn;
     public SteamStatusManager(SteamSessionManager session)
     {
         _session = session;
     }
-    public async Task UpdateStatusAsync(PlayerInfo? info, string playerName)
+    public async Task UpdateStatusAsync(PlayerInfo info)
     {
         if (!_session.IsLoggedOn) return;
         var config = Configurations.Instance.Settings;
-        var newName = FormatStatusName(info, playerName, config);
+        var newName = GetStatusPreview(info, config);
         if (newName == _lastSetName && _lastGeneration == _session.SessionGeneration) return;
         try
         {
@@ -40,14 +39,6 @@ internal class SteamStatusManager
         _session.ClearGameName();
         _lastSetName = string.Empty;
         Debug.WriteLine("[SteamStatus] 状态已清除");
-    }
-    public string GetStatusPreview(PlayerInfo? info, string playerName)
-    {
-        return FormatStatusName(info, playerName, Configurations.Instance.Settings);
-    }
-    public static string GetStatusPreview(PlayerInfo? info, string playerName, ConfigData config)
-    {
-        return FormatStatusName(info, playerName, config);
     }
     private static int GetUtf8ByteCount(string str)
     {
@@ -69,12 +60,8 @@ internal class SteamStatusManager
         }
         return str.Substring(0, charCount);
     }
-    private static string FormatStatusName(PlayerInfo? info, string playerName, ConfigData config)
+    public static string GetStatusPreview(PlayerInfo playerInfo, ConfigData config)
     {
-        if (info is not { } playerInfo)
-        {
-            return "yySync";
-        }
         var prefix = config.EnableCustomPrefix && !string.IsNullOrEmpty(config.CustomPrefix)
             ? config.CustomPrefix
             : string.Empty;
@@ -99,7 +86,7 @@ internal class SteamStatusManager
         }
         else if (playerInfo.Pause)
         {
-            progressPart = " (Paused)"; 
+            progressPart = " (Paused)";
         }
         var contentMaxBytes = 63 - prefixBytes;
         if (contentMaxBytes <= 0) return TruncateToUtf8ByteLength(prefix, 63);
@@ -111,7 +98,7 @@ internal class SteamStatusManager
             if (GetUtf8ByteCount(artistString) <= contentMaxBytes) return $"{prefix}{artistString}";
             return $"{prefix}{TruncateToUtf8ByteLength(title, contentMaxBytes)}";
         }
-        else  
+        else
         {
             var progressString = $"{title}{progressPart}";
             if (GetUtf8ByteCount(progressString) <= contentMaxBytes) return $"{prefix}{progressString}";

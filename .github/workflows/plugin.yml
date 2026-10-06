@@ -55,6 +55,6 @@ jobs:
           if ($LASTEXITCODE -ne 0) { throw 'Credential reload check failed' }
       - uses: actions/upload-artifact@v4
         with:
-          name: yySyncNCM-0.2.1-plugin
+          name: yySyncNCM-0.2.2-plugin
           path: build/yySyncNCM.plugin
           if-no-files-found: error

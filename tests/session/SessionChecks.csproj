@@ -7,8 +7,8 @@
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
   </PropertyGroup>
   <ItemGroup>
-    <Compile Include="../../Configurations.cs" Link="Configurations.cs" />
-    <Compile Include="../../SteamSessionManager.cs" Link="SteamSessionManager.cs" />
+    <Compile Include="../../backend/managed/Configurations.cs" Link="Configurations.cs" />
+    <Compile Include="../../backend/managed/SteamSessionManager.cs" Link="SteamSessionManager.cs" />
     <PackageReference Include="SteamKit2" Version="3.4.0" />
   </ItemGroup>
 </Project>

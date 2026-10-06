@@ -1,7 +1,7 @@
-using MusicRpc.Models;
+using YySyncNcm.Models;
 using System.Text.Json;
 
-namespace MusicRpc;
+namespace YySyncNcm;
 
 internal sealed class Backend
 {
@@ -160,8 +160,7 @@ internal sealed class Backend
             var duration = Seconds(request, "durationMs");
             _song = new PlayerInfo
             {
-                Identity = Text(song, "id"), Title = Text(song, "title"),
-                Artists = Text(song, "artists"), Album = Text(song, "album"), Cover = "", Url = "",
+                Title = Text(song, "title"), Artists = Text(song, "artists"),
                 Duration = duration,
                 Schedule = Math.Min(Seconds(request, "currentTimeMs"), duration > 0 ? duration : double.MaxValue),
                 Pause = !request.TryGetProperty("paused", out var paused) || paused.GetBoolean()
@@ -171,7 +170,7 @@ internal sealed class Backend
         if (_song is null || !settings.EnableSteamSync || (_song.Value.Pause && !settings.ShowPausedStatus))
             _status?.ClearStatus();
         else
-            _status?.UpdateStatusAsync(_song, "网易云音乐").GetAwaiter().GetResult();
+            _status?.UpdateStatusAsync(_song.Value).GetAwaiter().GetResult();
     }
 
     private object State()
@@ -188,7 +187,7 @@ internal sealed class Backend
             guard = _challenge,
             error = Configurations.Instance.StorageError ??
                 (_session?.IsLoggedOn == true ? null : _operationError ?? _session?.LoginError),
-            preview = _song is null ? "等待播放歌曲" : SteamStatusManager.GetStatusPreview(_song, "网易云音乐", config),
+            preview = _song is null ? "等待播放歌曲" : SteamStatusManager.GetStatusPreview(_song.Value, config),
             settings = new
             {
                 config.EnableSteamSync, config.ShowArtistName, config.ShowProgressBar, config.ShowPausedStatus,

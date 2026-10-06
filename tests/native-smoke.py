@@ -39,7 +39,8 @@ for arch in architectures:
         config = Path(directory) / "config.json"
         config.write_text(json.dumps({
             "SteamUsername": "test-account", "SteamRefreshToken": "fake-persisted-token",
-            "SteamGuardData": "fake-guard-data", "EnableSteamSync": True
+            "SteamGuardData": "fake-guard-data", "EnableSteamSync": True,
+            "AutoStart": True, "CloseToTray": True, "StartInTray": True
         }), encoding="utf-8")
         host = subprocess.Popen([str(executable), str(backend)], env=environment,
                                 stdin=subprocess.PIPE, stdout=subprocess.PIPE, text=True,
@@ -69,6 +70,7 @@ for arch in architectures:
             assert saved["SteamRefreshToken"] == "fake-persisted-token"
             assert saved["SteamGuardData"] == "fake-guard-data"
             assert saved["ShowArtistName"] is False
+            assert not {"AutoStart", "CloseToTray", "StartInTray"}.intersection(saved)
             assert not (Path(directory) / "config.json.tmp").exists()
             assert call({"type": "unknown"})["ok"] is False
             assert call({"type": "shutdown"})["ok"]

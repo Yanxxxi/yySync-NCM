@@ -1,4 +1,4 @@
-using MusicRpc;
+using YySyncNcm;
 using SteamKit2;
 
 foreach (var transient in new[] { EResult.NoConnection, EResult.Timeout, EResult.ServiceUnavailable, EResult.TryAnotherCM })

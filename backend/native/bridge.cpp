@@ -124,7 +124,7 @@ static void LoadManaged() {
     if (rc < 0 || !context) {
         setError(previousWriter);
         if (context) close(context);
-        throw std::runtime_error("Unable to initialize .NET 9 x64 Runtime: " + Utf8(hostError));
+        throw std::runtime_error("Unable to initialize .NET 9 Runtime: " + Utf8(hostError));
     }
     load_assembly_and_get_function_pointer_fn load = nullptr;
     rc = getDelegate(context, hdt_load_assembly_and_get_function_pointer, reinterpret_cast<void**>(&load));
@@ -133,10 +133,10 @@ static void LoadManaged() {
     if (rc < 0 || !load) throw std::runtime_error("Cannot initialize managed component loader");
     void* dispatchPointer = nullptr;
     void* freePointer = nullptr;
-    rc = load(assembly.c_str(), L"MusicRpc.NativeEntry, yySync.Managed", L"Dispatch",
+    rc = load(assembly.c_str(), L"YySyncNcm.NativeEntry, yySync.Managed", L"Dispatch",
         UNMANAGEDCALLERSONLY_METHOD, nullptr, &dispatchPointer);
     if (rc < 0 || !dispatchPointer) throw std::runtime_error("Cannot load yySync.Managed Dispatch entry");
-    rc = load(assembly.c_str(), L"MusicRpc.NativeEntry, yySync.Managed", L"Free",
+    rc = load(assembly.c_str(), L"YySyncNcm.NativeEntry, yySync.Managed", L"Free",
         UNMANAGEDCALLERSONLY_METHOD, nullptr, &freePointer);
     if (rc < 0 || !freePointer) throw std::runtime_error("Cannot load yySync.Managed Free entry");
     managedDispatch = reinterpret_cast<decltype(managedDispatch)>(dispatchPointer);
